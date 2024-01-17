@@ -12,7 +12,8 @@ import {
   StartCountdownButton,
   TaskInput,
 } from "./styles";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { differenceInSeconds } from "date-fns";
 
 const newCycloFormValidationSchema = zod.object({
   task: zod.string().min(1, "Informe o nome da tarefa"),
@@ -28,6 +29,7 @@ interface Cycle {
   id: string;
   task: string;
   minutsAmount: number;
+  startDate: Date;
 }
 
 export function Home() {
@@ -43,18 +45,30 @@ export function Home() {
     },
   });
 
+  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
+
+  useEffect(() => {
+    if (activeCycle) {
+      setInterval(() => {
+        setAmountSecondsPassed(
+          differenceInSeconds(new Date(), activeCycle.startDate)
+        );
+      }, 1000);
+    }
+  }, [activeCycle]);
+
   function handleCreateNewCyclo(data: NewCycloFormdata) {
     const newCycle: Cycle = {
       id: String(new Date().getTime()),
       task: data.task,
       minutsAmount: data.minutesAmount,
+      startDate: new Date(),
     };
 
     setCycles((state) => [...state, newCycle]);
     setActiveCycleId(newCycle.id);
     reset();
   }
-  const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
 
   const totalSeconds = activeCycle ? activeCycle.minutsAmount * 60 : 0;
   const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0;
